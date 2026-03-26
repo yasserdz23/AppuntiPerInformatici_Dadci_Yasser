@@ -11,7 +11,7 @@
 
         <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="0,15,15,0">
             <StackPanel Margin="10">
-                <TextBlock Text="DEV-STACK" Foreground="#00ADB5" FontSize="22" FontWeight="Bold" Margin="0,15,0,25" HorizontalAlignment="Center"/>
+                <TextBlock Text="INFO NOTES" Foreground="#00ADB5" FontSize="22" FontWeight="Bold" Margin="0,15,0,25" HorizontalAlignment="Center"/>
 
                 <Button x:Name="btnGestioneFile" Content="GestioneFile" Height="35" Margin="0,2" Foreground="White" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Padding="10,0"/>
                 <Button x:Name="btnWPF" Content="WPF" Height="35" Margin="0,2" Foreground="White" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Padding="10,0"/>
@@ -54,5 +54,6 @@
                 </ListBox>
             </StackPanel>
         </Grid>
+        <Button Content="❌ ELIMINA" HorizontalAlignment="Center" Margin="0,404,0,0" VerticalAlignment="Top" Width="200" Height="45" IsCancel="True" Background="#FFFB0505" Foreground="White" FontWeight="Bold" Click="Button_Click"/>
     </Grid>
 </Window>

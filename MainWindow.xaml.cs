@@ -145,5 +145,10 @@ namespace AppuntiPerInformatici_Dadci_Yasser
                 lstArchivio.SelectedItem = null;
             }
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
