@@ -35,25 +35,30 @@
                 <TextBox x:Name="txtContenuto" Height="250" Background="#2D2D2D" Foreground="#A9E190" BorderThickness="0" AcceptsReturn="True" Padding="10" FontFamily="Consolas" VerticalScrollBarVisibility="Auto"/>
 
                 <Button x:Name="btnSalva" Content="SALVA NEL FILE" Height="40" Margin="0,10,0,0" Background="#00ADB5" Foreground="White" FontWeight="Bold" BorderThickness="0"/>
-                <TextBlock x:Name="lblStato" Text="Seleziona una categoria" Foreground="#555555" Margin="0,15,0,5"/>
+                <TextBlock x:Name="lblStato" Text="Seleziona una categoria" Foreground="#555555" Margin="0,15,0,5" FontSize="24"/>
             </StackPanel>
 
             <StackPanel x:Name="pnlLettura" Visibility="Collapsed">
                 <Button x:Name="btnIndietro" Content="← TORNA A SCRIVERE" HorizontalAlignment="Left" Background="Transparent" Foreground="#00ADB5" BorderThickness="0" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                <ListBox x:Name="lstArchivio" Height="400" Background="#1E1E1E" BorderThickness="0" SelectionChanged="lstArchivio_SelectionChanged">
+                <ListBox x:Name="lstArchivio" Height="400" Background="#1E1E1E" BorderThickness="0" 
+                         SelectionChanged="lstArchivio_SelectionChanged" 
+                         MouseDoubleClick="lstArchivio_MouseDoubleClick">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="5,10">
-                                <TextBlock Text="{Binding Titolo}" Foreground="Red" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding Titolo}" Foreground="#00ADB5" FontWeight="Bold" FontSize="14"/>
                                 <TextBlock Text="{Binding Contenuto}" Foreground="White" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxHeight="20"/>
                                 <Separator Background="#333333" Margin="0,10,0,0"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <Button x:Name="btnElimina" Content="❌ ELIMINA APPUNTO SELEZIONATO" Height="45" Margin="0,20,0,0" 
+                        Background="#FFFB0505" Foreground="White" FontWeight="Bold" BorderThickness="0" 
+                        Click="btnElimina_Click"/>
             </StackPanel>
         </Grid>
-        <Button Content="❌ ELIMINA" HorizontalAlignment="Center" Margin="0,404,0,0" VerticalAlignment="Top" Width="200" Height="45" IsCancel="True" Background="#FFFB0505" Foreground="White" FontWeight="Bold" Click="Button_Click"/>
     </Grid>
 </Window>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace AppuntiPerInformatici_Dadci_Yasser
 {
-    // Classe per gestire i dati nella ListBox
     public class Appunto
     {
         public string Titolo { get; set; }
@@ -15,14 +16,13 @@ namespace AppuntiPerInformatici_Dadci_Yasser
 
     public partial class MainWindow : Window
     {
-        // Categoria di default
         string categoriaAttuale = "GestioneFile";
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // Collegamento rapido dei bottoni categorie tramite Lambda
+            // Collegamento categorie
             btnGestioneFile.Click += (s, e) => Seleziona("GestioneFile");
             btnWPF.Click += (s, e) => Seleziona("WPF");
             btnDelegate.Click += (s, e) => Seleziona("Delegate");
@@ -30,44 +30,64 @@ namespace AppuntiPerInformatici_Dadci_Yasser
             btnCode.Click += (s, e) => Seleziona("Code");
             btnPile.Click += (s, e) => Seleziona("Pile");
 
-            // Eventi per i tasti principali
             btnSalva.Click += btnSalva_Click;
             btnRecupera.Click += btnRecupera_Click;
             btnIndietro.Click += btnIndietro_Click;
         }
 
-        // Metodo per cambiare categoria e aggiornare la label
         private void Seleziona(string nome)
         {
             categoriaAttuale = nome;
-            lblStato.Text = "Categoria attiva: " + categoriaAttuale;
+            lblStato.Text = "Categoria: " + categoriaAttuale;
+            if (pnlLettura.Visibility == Visibility.Visible) btnRecupera_Click(null, null);
         }
 
-        // SCRITTURA (StreamWriter) - Gestisce anche gli "Invio"
         private void btnSalva_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtTitolo.Text))
             {
-                MessageBox.Show("Inserisci almeno il titolo!");
+                MessageBox.Show("Inserisci un titolo!");
                 return;
             }
 
-            string nomeFile = categoriaAttuale + ".txt";
-
             try
             {
-                using (StreamWriter sw = new StreamWriter(nomeFile, true))
-                {
-                    // Trasformiamo i ritorni a capo in un simbolo speciale '§' 
-                    // così l'intero appunto sta su una sola riga nel file .txt
-                    string contenutoPulito = txtContenuto.Text.Replace(Environment.NewLine, "§").Replace("\n", "§").Replace("\r", "§");
+                string nomeFile = categoriaAttuale + ".txt";
+                string titoloNuovo = txtTitolo.Text.Trim();
+                string contenutoPulito = txtContenuto.Text.Replace(Environment.NewLine, "§").Replace("\n", "§").Replace("\r", "§");
+                string nuovaRiga = titoloNuovo + "|" + contenutoPulito;
 
-                    sw.WriteLine(txtTitolo.Text + "|" + contenutoPulito);
+                List<string> linee = new List<string>();
+
+                // 1. Se il file esiste, leggiamo le note esistenti
+                if (File.Exists(nomeFile))
+                {
+                    linee = File.ReadAllLines(nomeFile).ToList();
                 }
 
+                // 2. Cerchiamo se esiste già una nota con lo stesso titolo
+                // Usiamo lo split per confrontare solo la parte del titolo (prima del '|')
+                int indiceEsistente = linee.FindIndex(l => l.Split('|')[0].Equals(titoloNuovo, StringComparison.OrdinalIgnoreCase));
+
+                if (indiceEsistente != -1)
+                {
+                    // Se esiste, la sostituiamo (Modifica)
+                    linee[indiceEsistente] = nuovaRiga;
+                    lblStato.Text = "Nota aggiornata!";
+                }
+                else
+                {
+                    // Se non esiste, la aggiungiamo (Nuovo inserimento)
+                    linee.Add(nuovaRiga);
+                    lblStato.Text = "Nuova nota salvata!";
+                }
+
+                // 3. Sovrascriviamo il file con la lista aggiornata
+                File.WriteAllLines(nomeFile, linee);
+
+                // Pulizia campi
                 txtTitolo.Clear();
                 txtContenuto.Clear();
-                lblStato.Text = "Appunto salvato in " + nomeFile;
             }
             catch (Exception ex)
             {
@@ -75,7 +95,6 @@ namespace AppuntiPerInformatici_Dadci_Yasser
             }
         }
 
-        // LETTURA (StreamReader) - Ricostruisce le righe originali
         private void btnRecupera_Click(object sender, RoutedEventArgs e)
         {
             lstArchivio.Items.Clear();
@@ -83,72 +102,70 @@ namespace AppuntiPerInformatici_Dadci_Yasser
 
             if (File.Exists(nomeFile))
             {
-                try
+                var righe = File.ReadAllLines(nomeFile);
+                foreach (var riga in righe)
                 {
-                    using (StreamReader sr = new StreamReader(nomeFile))
-                    {
-                        string riga;
-                        while ((riga = sr.ReadLine()) != null)
-                        {
-                            string[] parti = riga.Split('|');
-                            if (parti.Length >= 2)
-                            {
-                                // Ripristiniamo gli "Invio" originali sostituendo '§' con il ritorno a capo
-                                string testoOriginale = parti[1].Replace("§", Environment.NewLine);
-
-                                lstArchivio.Items.Add(new Appunto
-                                {
-                                    Titolo = parti[0].ToUpper(),
-                                    Contenuto = testoOriginale
-                                });
-                            }
-                        }
-                    }
-                    // Cambio visualizzazione: nascondo editor, mostro lista
-                    pnlScrittura.Visibility = Visibility.Collapsed;
-                    pnlLettura.Visibility = Visibility.Visible;
+                    var parti = riga.Split('|');
+                    if (parti.Length >= 2)
+                        lstArchivio.Items.Add(new Appunto { Titolo = parti[0], Contenuto = parti[1].Replace("§", Environment.NewLine) });
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Errore durante la lettura: " + ex.Message);
-                }
+                pnlScrittura.Visibility = Visibility.Collapsed;
+                pnlLettura.Visibility = Visibility.Visible;
             }
-            else
+            else { MessageBox.Show("Nessun appunto trovato."); }
+        }
+
+        // --- ELIMINA ---
+        private void btnElimina_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstArchivio.SelectedItem == null)
             {
-                MessageBox.Show("Nessun appunto trovato per " + categoriaAttuale);
+                MessageBox.Show("Seleziona l'appunto da eliminare cliccandoci sopra.");
+                return;
+            }
+
+            Appunto daRimuovere = (Appunto)lstArchivio.SelectedItem;
+            if (MessageBox.Show($"Eliminare '{daRimuovere.Titolo}'?", "Conferma", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                string nomeFile = categoriaAttuale + ".txt";
+                var linee = File.ReadAllLines(nomeFile).ToList();
+                var rigaDaTogliere = linee.FirstOrDefault(l => l.Split('|')[0] == daRimuovere.Titolo);
+
+                if (rigaDaTogliere != null)
+                {
+                    linee.Remove(rigaDaTogliere);
+                    File.WriteAllLines(nomeFile, linee);
+                    lstArchivio.Items.Remove(daRimuovere);
+                    lblStato.Text = "Eliminato.";
+                }
             }
         }
 
-        // Torna alla schermata di inserimento
+        // --- APRI (DOPPIO CLICK) ---
+        private void lstArchivio_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (lstArchivio.SelectedItem != null)
+            {
+                Appunto selezionato = (Appunto)lstArchivio.SelectedItem;
+                txtTitolo.Text = selezionato.Titolo;
+                txtContenuto.Text = selezionato.Contenuto;
+
+                pnlLettura.Visibility = Visibility.Collapsed;
+                pnlScrittura.Visibility = Visibility.Visible;
+                lblStato.Text = "Modifica in corso...";
+            }
+        }
+
         private void btnIndietro_Click(object sender, RoutedEventArgs e)
         {
             pnlLettura.Visibility = Visibility.Collapsed;
             pnlScrittura.Visibility = Visibility.Visible;
         }
 
-        // Quando clicchi un appunto nella lista, lo riapre nell'editor per leggerlo tutto
         private void lstArchivio_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (lstArchivio.SelectedItem != null)
-            {
-                Appunto selezionato = (Appunto)lstArchivio.SelectedItem;
-
-                // Riporto titolo e contenuto (con i suoi a capo) nei TextBox
-                txtTitolo.Text = selezionato.Titolo;
-                txtContenuto.Text = selezionato.Contenuto;
-
-                // Torno alla modalità scrittura per permettere la lettura completa
-                pnlLettura.Visibility = Visibility.Collapsed;
-                pnlScrittura.Visibility = Visibility.Visible;
-
-                // Resetto la selezione della lista
-                lstArchivio.SelectedItem = null;
-            }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
+                lblStato.Text = "Selezionato: " + ((Appunto)lstArchivio.SelectedItem).Titolo;
         }
     }
 }
